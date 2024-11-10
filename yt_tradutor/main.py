@@ -72,6 +72,25 @@ def summarize_text(text):
         print(f"Erro ao resumir o texto: {e}")
         return None
 
+# Função para dividir o texto em partes menores e extrair tópicos principais
+def extract_key_points(text):
+    try:
+        summarizer = pipeline('summarization', model="sshleifer/distilbart-cnn-12-6")
+        max_chunk_size = 500  # Limitar o tamanho das partes para 500 tokens, reduzindo o risco de erro
+        
+        # Dividir o texto em partes menores
+        chunks = [text[i:i + max_chunk_size] for i in range(0, len(text), max_chunk_size)]
+        
+        key_points = []
+        for chunk in chunks:
+            key_point = summarizer(chunk, max_length=150, min_length=50, do_sample=False)
+            key_points.append(key_point[0]['summary_text'])
+        
+        return " ".join(key_points)
+    except Exception as e:
+        print(f"Erro ao extrair tópicos principais: {e}")
+        return None
+
 # Função principal que coordena todas as etapas
 def main(video_url):
     video_filename = 'video.mp4'
@@ -94,8 +113,16 @@ def main(video_url):
             summary = summarize_text(text)
             
             if summary:
-                print("Resumo do vídeo:")
+                print("Resumo completo do vídeo:")
                 print(summary)
+                
+                # Extrair tópicos principais
+                print("\nTópicos principais do vídeo:")
+                key_points = extract_key_points(text)
+                if key_points:
+                    print(key_points)
+                else:
+                    print("Não foi possível extrair os tópicos principais.")
             else:
                 print("Não foi possível gerar um resumo.")
         else:
